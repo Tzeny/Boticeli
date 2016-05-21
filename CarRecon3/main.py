@@ -26,21 +26,14 @@ v_points = {}
 v_points_entry = {}
 v_points_exit = {}
 
-# double Detection::distance_to_Line(cv::Point line_start, cv::Point line_end, cv::Point point)
-# {
-# 	double normalLength = _hypot(line_end.x - line_start.x, line_end.y - line_start.y);
-# 	double distance = (double)((point.x - line_start.x) * (line_end.y - line_start.y) - (point.y - line_start.y) * (line_end.x - line_start.x)) / normalLength;
-# 	return distance;
-# }
-
 def distToLine(line_s, line_e, point):
-    normalLength = np.hypot(line_e.x - line_s.x, line_e.y - line_s.y)
-    distance = ((point.x - line_s.x) * (line_e.y - line_s.y) - (point.y - line_s.y) * (line_e.x - line_s.x)) / normalLength
+    normalLength = np.hypot(line_e[0] - line_s[0], line_e[1] - line_s[1])
+    distance = np.abs((point[0] - line_s[0]) * (line_e[1] - line_s[1]) - (point[1] - line_s[1]) * (line_e[0] - line_s[0])) / normalLength
     return distance
 
 def distToLineArr(line_arr, point):
     dist = 99999
-    for i in range (0, len(line_arr)):
+    for i in range (0, len(line_arr)/2):
         d = distToLine(line_arr[2*i],line_arr[2*i+1], point)
         if d<dist:
             dist = d
@@ -75,8 +68,6 @@ while cap.isOpened():
 
     frame = cv2.resize(orig_1, (0,0), fx=0.75, fy=0.75)
 
-    #frame = orig[100:698, 0:1280]
-
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     cars = car_cascade[0].detectMultiScale(gray, 1.1, 1)
@@ -110,25 +101,24 @@ while cap.isOpened():
     for (x,y) in current_points:
         found = False
         min = 99999
-        min_id = 0;
+        min_id = 0
         min_point = (x,y)
 
         for i,(m,n) in v_points.iteritems():
             dist = distance((x,y),(m,n))
-            #print "Dist from "+str(i)+"to current position: "+str(x)+","+str(y)
             if dist < 300/scale and dist < min:
                 min = dist
                 found = True
                 min_id = i
                 min_point = (x,y)
 
-        print str(cv2.pointPolygonTest(points, (x, y), True))
+
         if(cv2.pointPolygonTest(points, (x,y), True)) >= 15/scale:
             if found:
-                #print "Moving point "+str(min_id)+"to coords"+str(min_point[0])+","+str(min_point[1])
                 v_points[min_id] = min_point
             else:
                 v_points[id] = min_point
+                v_points_entry[id] = min_point
                 id = id +1
 
     to_be_deleted = list()
@@ -137,21 +127,16 @@ while cap.isOpened():
         cv2.circle(frame, (x,y), 25, (255,255,255))
         cv2.putText(frame, str(i), (x,y), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 1, (255, 255, 255), 2)
 
-        # if cv2.pointPolygonTest(points, (x,y), True) <=20/scale:
-        #     if i in v_points_entry:
-        #         v_points_exit[i] = (x,y)
-        #         to_be_deleted.append(i)
-        #     else:
-        #         v_points_entry[i] = (x,y)
-
-        
+        if i in v_points_entry:
+            d = distToLineArr(exits,(x,y))
+            if d < 25:
+                v_points_exit[i] = (x, y)
+                to_be_deleted.append(i)
 
     for i in to_be_deleted:
         v_points.pop(i,None)
 
-    display = cv2.resize(frame, (0, 0), fx=scale, fy=scale)
-
-    cv2.imshow('frame',display)
+    cv2.imshow('frame',frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

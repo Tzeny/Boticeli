@@ -117,9 +117,11 @@ while cap.isOpened():
             if found:
                 v_points[min_id] = min_point
             else:
-                v_points[id] = min_point
-                v_points_entry[id] = min_point
-                id = id +1
+                d = distToLineArr(exits, min_point)
+                if d > 50:
+                    v_points[id] = min_point
+                    v_points_entry[id] = min_point
+                    id = id +1
 
     to_be_deleted = list()
 
@@ -135,6 +137,14 @@ while cap.isOpened():
 
     for i in to_be_deleted:
         v_points.pop(i,None)
+
+    for i,(x,y) in v_points_entry.iteritems():
+        cv2.circle(frame, (x, y), 25, (0, 255, 0))
+        cv2.putText(frame, str(i), (x, y), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 1, (0, 255, 0), 2)
+
+    for i, (x, y) in v_points_exit.iteritems():
+        cv2.circle(frame, (x, y), 25, (0, 0, 255))
+        cv2.putText(frame, str(i), (x, y), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 1, (0, 0, 255), 2)
 
     cv2.imshow('frame',frame)
 

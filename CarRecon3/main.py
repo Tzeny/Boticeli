@@ -18,6 +18,8 @@ points = np.array([(50,225),(900,160),(1280,250),(1280,360),(244,650)])
 id = 0
 
 v_points = {}
+v_points_entry = {}
+v_points_exit = {}
 
 #check if x is within the image
 def checkX(origX):
@@ -78,7 +80,7 @@ while cap.isOpened():
 
         for i,(m,n) in v_points.iteritems():
             dist = distance((x,y),(m,n))
-            print "Dist from "+str(i)+"to current position: "+str(x)+","+str(y)
+            #print "Dist from "+str(i)+"to current position: "+str(x)+","+str(y)
             if dist < 300 and dist < min:
                 min = dist
                 found = True
@@ -86,15 +88,27 @@ while cap.isOpened():
                 min_point = (x,y)
 
         if found:
-            print "Moving point "+str(min_id)+"to coords"+str(min_point[0])+","+str(min_point[1])
+            #print "Moving point "+str(min_id)+"to coords"+str(min_point[0])+","+str(min_point[1])
             v_points[min_id] = min_point
         else:
             v_points[id] = min_point
             id = id +1
 
+    to_be_deleted = list()
+
     for i,(x,y) in v_points.iteritems():
         cv2.circle(frame, (x,y), 25, (255,255,255))
         cv2.putText(frame, str(i), (x,y), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 1, (255, 255, 255), 2)
+
+        if cv2.pointPolygonTest(points, (x,y), True) <=10:
+            if i in v_points_entry:
+                v_points_exit[i] = (x,y)
+                to_be_deleted.append(i)
+            else:
+                v_points_entry[i] = (x,y)
+
+    for i in to_be_deleted:
+        v_points.pop(i,None)
 
     cv2.imshow('frame',frame)
 

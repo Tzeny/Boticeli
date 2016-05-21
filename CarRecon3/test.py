@@ -62,10 +62,11 @@ def distance((a1,b1),(a2,b2)):
 
 #main loop
 while cap.isOpened():
+
     #image aquisition and cascade detection
     ret, orig_1 = cap.read()
 
-    if not ret:
+    if ret:
         break
 
     frame = cv2.resize(orig_1, (0,0), fx=0.75, fy=0.75)

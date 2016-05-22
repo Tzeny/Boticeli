@@ -63,6 +63,8 @@ def distance((a1,b1),(a2,b2)):
 
 f_count = 0
 
+time = 1
+
 #main loop
 while cap.isOpened():
     #image aquisition and cascade detection
@@ -73,6 +75,8 @@ while cap.isOpened():
     if not ret:
         break
 
+    e1 = cv2.getTickCount()
+
     frame = cv2.resize(orig_1, (0,0), fx=0.75, fy=0.75)
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -81,8 +85,9 @@ while cap.isOpened():
 
     current_points = list()
 
-    cv2.putText(frame, str(f_count), (0,100), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 3, (255, 255, 255), 2)
-
+    cv2.putText(frame, "Frame:" +str(f_count), (20,40), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255),1)
+    cv2.putText(frame, "Cars:" + str(id), (20, 70), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 1)
+    cv2.putText(frame, "FPS:" + str(int(1/time)), (20, 100), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 1)
     # if f_count > 180:
     #     if cv2.waitKey(10000) & 0xFF == ord('q'):
     #         break
@@ -172,8 +177,8 @@ while cap.isOpened():
             if dte<60 and d2 > 70:
                 v_points_exit[i] = (x, y)
                 to_be_deleted.append(i)
-            else:
-                print "Id "+str(i)+"is this far away from exit: "+str(dte)
+            # else:
+            #     print "Id "+str(i)+"is this far away from exit: "+str(dte)
 
 
         if f_count - v_points_check[i][1] > 10:
@@ -191,13 +196,49 @@ while cap.isOpened():
         cv2.circle(frame, (x, y), 5, (0, 0, 255))
         cv2.putText(frame, str(i), (x+5, y+5), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.75, (0, 0, 255))
 
+    #frame = cv2.resize(frame, (0, 0), fx=1.35, fy=1.35)
+
+    e2 = cv2.getTickCount()
+
+    time = (e2 - e1) / cv2.getTickFrequency()
+
     cv2.imshow('frame',frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+cap.release()
 cv2.waitKey()
 
+#process data
+
+print "Begging processing"
+
+print "Remove duplicates"
+
+obsolete = []
+
+for i,(x,y) in v_points_entry.iteritems():
+    if not(i in v_points_exit):
+        obsolete.append(i)
+
+for i in obsolete:
+    v_points_exit.pop(i,None)
+
+obsolete = []
+
+for i, (x, y) in v_points_exit.iteritems():
+    if not (i in v_points_entry):
+        obsolete.append(i)
+
+for i in obsolete:
+    v_points_entry.pop(i, None)
+
+incoming = [np.array([(140,170),(440,440),(870,325),(400,145)]),np.array([(633,147),(556,202),(700,256),(822,171)]),
+            np.array([(825,175),(700,255),(872,326),(955,208)]),np.array([(440,440),(204,227),(82,265),(185,508)])]
+
+
+
 # When everything done, release the capture
-cap.release()
+
 cv2.destroyAllWindows()

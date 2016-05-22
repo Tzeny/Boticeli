@@ -15,7 +15,7 @@ hei = 698
 scale = 2 #we divide by this
 
 #defines our intersection
-#points = np.array([(50,125),(900,60),(1280,150),(1280,260),(244,450)])
+#points = np.array([(0,0),(1280,0),(1280,720),(0,720)])
 points = np.array([(50,155),(500,110),(900,150),(900,290),(180,480)])
 entries = [(50,155),(410,115),(630,120),(820,145),(900,290),(900,190), (75,230),(180,480)]
 exits = [(410,115),(500,110),(500,110),(640,120),(820,145),(900,150),(900,150),(900,190),(900,290),(180,480),(75,230),(50,155)]
@@ -265,19 +265,38 @@ fo = open("data.out", "w")
 mat = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
 for i,(x,y) in v_points_entry.iteritems():
-    a1 = 0
-    b1 = 0
+    a1 = -1
+    b1 = -1
     for j in range (0,4):
+        #print "Point "+str(x)+","+str(y)+"; zone check "+str(i)+": "+str(cv2.pointPolygonTest(incoming[j], (x,y), True))
         if cv2.pointPolygonTest(incoming[j], (x,y), False) >= 0:
             a1 = j
             break
-    (m,n) = v_points_exit[i]
-    for j in range(0, 4):
-        if cv2.pointPolygonTest(going[j], (x, y), False) >= 0:
-            b1 = j
-            break
-    mat[a1][b1] += 1
 
+    print "i:"+str(i)
+
+    if i in v_points_exit:
+        (m,n) = v_points_exit[i]
+        for j in range(0, 4):
+            if cv2.pointPolygonTest(going[j], (x, y), False) >= 0:
+                b1 = j
+                break
+
+    if a1 != -1 and b1 != -1:
+        mat[a1][b1] += 1
+
+    #print "a1, b1: "+str(a1)+";"+str(b1)
+
+for j,(x1,y1) in v_points_exit.iteritems():
+    print "j:"+str(j)
+
+
+for i in range(0,4):
+    for j in range(0,4):
+        fo.write(str(mat[i][j])+" ")
+    fo.write("\n")
+
+fo.close()
 
 cv2.waitKey()
 

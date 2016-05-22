@@ -65,6 +65,10 @@ f_count = 0
 
 time = 1
 
+ret, stat = cap.read() #read an initial frame
+
+stat = cv2.resize(stat, (0,0), fx=0.75, fy=0.75)
+
 #main loop
 while cap.isOpened():
     #image aquisition and cascade detection
@@ -237,7 +241,45 @@ for i in obsolete:
 incoming = [np.array([(140,170),(440,440),(870,325),(400,145)]),np.array([(633,147),(556,202),(700,256),(822,171)]),
             np.array([(825,175),(700,255),(872,326),(955,208)]),np.array([(440,440),(204,227),(82,265),(185,508)])]
 
+going = [np.array([(153,168),(509,138),(788,170),(700,256)]),np.array([(788,167),(960,208),(950,326),(705,254)]),
+         np.array([(904,315),(700,255),(142,412),(184,500)]),np.array([(94,283),(233,240),(155,166),(53,180)])]
 
+for j in range(0,4):
+    for i in range(0, len(incoming[j])):
+        cv2.line(stat, (incoming[j][i][0], incoming[j][i][1]), (incoming[j][(i + 1) % len(incoming[j])][0], incoming[j][(i + 1) % len(incoming[j])][1]),(0, 255, 0), 3)
+    for i in range(0, len(going[j])):
+        cv2.line(stat, (going[j][i][0], going[j][i][1]),(going[j][(i + 1) % len(going[j])][0], going[j][(i + 1) % len(going[j])][1]), (0, 0, 255), 3)
+
+for i, (x, y) in v_points_entry.iteritems():
+    cv2.circle(stat, (x, y), 5, (0, 255, 0))
+    cv2.putText(stat, str(i), (x + 5, y + 5), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.75, (0, 255, 0))
+
+for i, (x, y) in v_points_exit.iteritems():
+    cv2.circle(stat, (x, y), 5, (0, 0, 255))
+    cv2.putText(stat, str(i), (x + 5, y + 5), cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, 0.75, (0, 0, 255))
+
+cv2.imshow('frame',stat)
+
+fo = open("data.out", "w")
+
+mat = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+
+for i,(x,y) in v_points_entry.iteritems():
+    a1 = 0
+    b1 = 0
+    for j in range (0,4):
+        if cv2.pointPolygonTest(incoming[j], (x,y), False) >= 0:
+            a1 = j
+            break
+    (m,n) = v_points_exit[i]
+    for j in range(0, 4):
+        if cv2.pointPolygonTest(going[j], (x, y), False) >= 0:
+            b1 = j
+            break
+    mat[a1][b1] += 1
+
+
+cv2.waitKey()
 
 # When everything done, release the capture
 
